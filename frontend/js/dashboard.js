@@ -1,23 +1,7 @@
 // AutoAssess Dashboard JavaScript
 
 // Configuration
-const API_BASE_URL = (() => {
-    const metaTag = document.querySelector('meta[name="api-base-url"]');
-    const globalOverride = window.AUTOASSESS_API_BASE_URL;
-    const sanitize = (url) => url.replace(/\/$/, '');
-    if (metaTag && metaTag.content.trim()) {
-        return sanitize(metaTag.content.trim());
-    }
-    if (globalOverride && typeof globalOverride === 'string' && globalOverride.trim()) {
-        return sanitize(globalOverride.trim());
-    }
-    const origin = window.location.origin;
-    const isFileProtocol = window.location.protocol === 'file:';
-    if (!origin || origin === 'null' || isFileProtocol) {
-        return 'http://localhost:5000';
-    }
-    return origin;
-})();
+const API_BASE_URL = 'http://localhost:5000';
 
 // State Management
 let submissions = [];
@@ -116,19 +100,10 @@ async function apiCall(endpoint, method = 'GET', body = null) {
         }
         
         const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
-        const contentType = response.headers.get('content-type') || '';
-        let data;
+        const data = await response.json();
         
-        if (contentType.includes('application/json')) {
-            data = await response.json();
-        } else {
-            const text = await response.text();
-            throw new Error(text || `Unexpected response format (status ${response.status})`);
-        }
-        
-        if (!response.ok || !data.success) {
-            const message = data?.error || data?.message || `Request failed with status ${response.status}`;
-            throw new Error(message);
+        if (!data.success) {
+            throw new Error(data.error || 'Request failed');
         }
         
         return data;
