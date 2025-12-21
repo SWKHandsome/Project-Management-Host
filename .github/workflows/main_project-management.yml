@@ -1,17 +1,30 @@
-- name: Set up Python
-  uses: actions/setup-python@v5
-  with:
-    python-version: '3.10'
+name: Deploy backend
 
-- name: Install backend dependencies
-  run: |
-    cd backend
-    python -m pip install --upgrade pip
-    pip install -r requirements.txt
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
 
-- name: Deploy to App Service
-  uses: azure/webapps-deploy@v3
-  with:
-    app-name: pm-backend-app
-    slot-name: Production
-    package: backend
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Deploy to App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: pm-backend-app
+          slot-name: Production
+          package: backend
