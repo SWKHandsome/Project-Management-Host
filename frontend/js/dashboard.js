@@ -1,7 +1,7 @@
 // AutoAssess Dashboard JavaScript
 
 // Configuration
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'project-management-fch3gbabc4hndrcs.malaysiawest-01.azurewebsites.nethttps://project-management-fch3gbabc4hndrcs.malaysiawest-01.azurewebsites.net/';
 
 // State Management
 let submissions = [];
