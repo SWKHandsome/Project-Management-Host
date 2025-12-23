@@ -521,12 +521,15 @@ async function viewDocument(submissionId, fileId, fileName) {
         let viewerContent = '';
         
         // Check file type and render accordingly
-        if (fileId && (fileExt === 'pdf' || fileExt === 'docx' || fileExt === 'doc')) {
-            // Use Google Drive preview (works without API auth)
+        if (fileId && (fileExt === 'pdf' || fileExt === 'docx' || fileExt === 'doc' || fileExt === 'png' || fileExt === 'jpg' || fileExt === 'jpeg')) {
+            // Use Google Drive preview for documents and images (works without API auth)
+            const icon = (fileExt === 'png' || fileExt === 'jpg' || fileExt === 'jpeg') ? '🖼️' : '📄';
+            const displayType = (fileExt === 'png' || fileExt === 'jpg' || fileExt === 'jpeg') ? 'Image' : 'Document';
+            
             viewerContent = `
                 <div class="document-viewer">
                     <div class="viewer-header">
-                        <h3>📄 ${fileName || 'Assignment Document'}</h3>
+                        <h3>${icon} ${fileName || 'Assignment ' + displayType}</h3>
                         <p class="text-muted">Viewing from Google Drive</p>
                     </div>
                     <iframe 
