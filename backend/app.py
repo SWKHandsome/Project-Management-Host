@@ -298,6 +298,66 @@ def generate_individual_report(submission_id):
             'error': str(e)
         }), 500
 
+@app.route('/api/submissions/<submission_id>/download-file', methods=['GET'])
+def download_submission_file(submission_id):
+    """Download the original assignment file from Google Drive"""
+    try:
+        from bson.objectid import ObjectId
+        import tempfile
+        
+        # Get submission from database
+        submission = db.submissions.find_one({'_id': ObjectId(submission_id)})
+        
+        if not submission:
+            return jsonify({
+                'success': False,
+                'error': 'Submission not found'
+            }), 404
+        
+        file_id = submission.get('file_id')
+        file_name = submission.get('file_name', 'assignment')
+        file_content_text = submission.get('file_content', '')
+        
+        if not file_id:
+            return jsonify({
+                'success': False,
+                'error': 'File ID not found in submission'
+            }), 404
+        
+        # Try to download file from Google Drive
+        file_content = drive_monitor.download_file_content(file_id)
+        
+        # If Google Drive download fails, use stored content as fallback
+        if not file_content and file_content_text:
+            print(f"  → Using stored content as fallback for {file_name}")
+            file_content = file_content_text.encode('utf-8')
+            # Change extension to .txt since we only have text content
+            file_name = os.path.splitext(file_name)[0] + '.txt'
+        
+        if not file_content:
+            return jsonify({
+                'success': False,
+                'error': 'File content not available. Please ensure Google Drive credentials are properly configured.'
+            }), 500
+        
+        # Save to temp file and send
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file_name)[1])
+        temp_file.write(file_content)
+        temp_file.close()
+        
+        return send_file(
+            temp_file.name,
+            as_attachment=True,
+            download_name=file_name
+        )
+    
+    except Exception as e:
+        print(f"  ✗ Error in download endpoint: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @app.route('/api/reports/spreadsheet', methods=['GET'])
 def generate_spreadsheet():
     """Generate Excel spreadsheet with all assessments"""

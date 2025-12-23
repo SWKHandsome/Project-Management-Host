@@ -34,12 +34,13 @@ class DriveMonitor:
     def initialize_drive_api(self):
         """Initialize Google Drive API service"""
         try:
-            if not os.path.exists(Config.GOOGLE_CREDENTIALS_PATH):
-                print("✗ Google Drive credentials not found")
+            creds_path = os.path.abspath(Config.GOOGLE_CREDENTIALS_PATH)
+            if not os.path.exists(creds_path):
+                print(f"✗ Google Drive credentials not found at: {creds_path}")
                 return
             
             credentials = service_account.Credentials.from_service_account_file(
-                Config.GOOGLE_CREDENTIALS_PATH,
+                creds_path,
                 scopes=['https://www.googleapis.com/auth/drive.readonly']
             )
             
@@ -198,6 +199,14 @@ class DriveMonitor:
     def download_file_content(self, file_id):
         """Download file content from Google Drive"""
         try:
+            # Re-initialize credentials if needed
+            if not self.service:
+                print("  ⚠ Drive service not initialized, attempting to reinitialize...")
+                self.initialize_drive_api()
+                if not self.service:
+                    print("  ✗ Failed to reinitialize Drive service")
+                    return b""
+            
             request = self.service.files().get_media(fileId=file_id)
             file_handle = io.BytesIO()
             downloader = MediaIoBaseDownload(file_handle, request)
@@ -207,8 +216,27 @@ class DriveMonitor:
                 status, done = downloader.next_chunk()
             
             file_handle.seek(0)
-            return file_handle.read()
+            content = file_handle.read()
+            print(f"  ✓ Downloaded {len(content)} bytes from Google Drive")
+            return content
             
         except Exception as e:
-            print(f"  ✗ Error downloading file: {e}")
+            print(f"  ✗ Error downloading file from Google Drive: {e}")
+            # Try reinitializing and retry once
+            try:
+                print("  → Attempting to reinitialize Google Drive API...")
+                self.initialize_drive_api()
+                if self.service:
+                    request = self.service.files().get_media(fileId=file_id)
+                    file_handle = io.BytesIO()
+                    downloader = MediaIoBaseDownload(file_handle, request)
+                    done = False
+                    while not done:
+                        status, done = downloader.next_chunk()
+                    file_handle.seek(0)
+                    content = file_handle.read()
+                    print(f"  ✓ Downloaded {len(content)} bytes after retry")
+                    return content
+            except Exception as retry_error:
+                print(f"  ✗ Retry failed: {retry_error}")
             return b""

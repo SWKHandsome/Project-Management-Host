@@ -83,15 +83,27 @@ def parse_student_info_from_filename(filename):
     
     # Extract name (text before or after ID)
     if student_id:
-        # Split by common delimiters
-        parts = re.split(r'[_\-\s]+', name_part)
+        # Convert student ID to uppercase for consistency
+        student_id = student_id.upper()
+        
+        # Remove the student ID from the string (case insensitive)
+        name_part = re.sub(re.escape(student_id), '', name_part, flags=re.IGNORECASE)
+        
+        # Split by common delimiters and take the first significant part
+        # This gets the name before any dash or underscore separators
+        parts = re.split(r'[_\-]+', name_part)
+        
+        # Get the first non-empty part with actual letters
+        name_words = []
         for part in parts:
-            # Look for part that's not the ID and contains letters
-            if part != student_id and re.search(r'[A-Za-z]{2,}', part):
-                if not student_name:
-                    student_name = part
-                else:
-                    student_name += ' ' + part
+            part = part.strip()
+            if part and re.search(r'[A-Za-z]{2,}', part):
+                # Only take the first meaningful name segment (before dash)
+                name_words.extend(part.split())
+                break  # Stop after first meaningful segment
+        
+        if name_words:
+            student_name = ' '.join(name_words)
     
     return {
         'student_id': student_id,

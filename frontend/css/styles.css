@@ -309,11 +309,12 @@ body {
     text-align: left;
     font-weight: 600;
     position: relative;
-    transition: background-color 0.2s ease;
+    outline: none;
 }
 
-.submissions-table th:hover {
-    background-color: rgba(0, 0, 0, 0.1);
+.submissions-table th.sortable {
+    cursor: pointer;
+    outline: none;
 }
 
 .submissions-table td {
@@ -377,6 +378,11 @@ body {
 
 .btn-info {
     background-color: var(--secondary-color);
+    color: white;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
     color: white;
 }
 
@@ -496,6 +502,55 @@ body {
 
 .detail-group {
     margin-bottom: 25px;
+}
+
+/* Document Viewer */
+.document-viewer {
+    width: 100%;
+}
+
+.viewer-header {
+    padding: 20px;
+    background: var(--light-color);
+    border-radius: 8px 8px 0 0;
+    margin: -25px -25px 20px -25px;
+}
+
+.viewer-header h3 {
+    margin: 0 0 5px 0;
+    color: var(--primary-color);
+}
+
+.text-muted {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.text-content-viewer {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    max-height: 600px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+}
+
+.text-content-viewer pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--text-primary);
+}
+
+.viewer-footer {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 2px solid var(--border-color);
+    text-align: center;
 }
 
 .detail-label {

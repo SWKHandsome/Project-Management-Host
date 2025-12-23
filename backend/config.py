@@ -21,11 +21,12 @@ class Config:
     
     # Google Drive Configuration
     GOOGLE_DRIVE_FOLDER_ID = os.getenv('GOOGLE_DRIVE_FOLDER_ID', '')
-    GOOGLE_CREDENTIALS_PATH = os.getenv('GOOGLE_CREDENTIALS_PATH', '../config/credentials.json')
+    GOOGLE_CREDENTIALS_PATH = os.getenv('GOOGLE_CREDENTIALS_PATH', 
+                                        os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config', 'credentials.json'))
     
     # File Monitoring Configuration
     MONITORING_INTERVAL = int(os.getenv('MONITORING_INTERVAL', 30))  # seconds
-    SUPPORTED_FILE_TYPES = ['.pdf', '.docx', '.txt', '.doc']
+    SUPPORTED_FILE_TYPES = ['.pdf', '.docx', '.txt', '.doc', '.png', '.jpg', '.jpeg']
     
     # Evaluation Configuration
     MAX_SCORE = 100
@@ -88,12 +89,12 @@ class Config:
         }
     }
     
-    # Student ID patterns (regex patterns)
+    # Student ID patterns (regex patterns) - case insensitive
     STUDENT_ID_PATTERNS = [
-        r'[A-Z]\d{6}[A-Z]',  # Example: B240253C (1 letter + 6 digits + 1 letter)
-        r'[A-Z]{2}\d{6}',    # Example: AB123456 (2 letters + 6 digits)
-        r'\d{8,10}',         # Example: 12345678 (8-10 digits)
-        r'[A-Z]\d{7}',       # Example: A1234567 (1 letter + 7 digits)
+        r'[A-Za-z]\d{6}[A-Za-z]',  # Example: B240253C or b250102a (1 letter + 6 digits + 1 letter)
+        r'[A-Za-z]{2}\d{6}',       # Example: AB123456 or ab123456 (2 letters + 6 digits)
+        r'\d{8,10}',               # Example: 12345678 (8-10 digits)
+        r'[A-Za-z]\d{7}',          # Example: A1234567 or a1234567 (1 letter + 7 digits)
     ]
     
     # Name extraction patterns

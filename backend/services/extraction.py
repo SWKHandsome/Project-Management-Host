@@ -7,6 +7,16 @@ from PyPDF2 import PdfReader
 from docx import Document
 import io
 
+try:
+    import pytesseract
+    from PIL import Image
+    # Set tesseract path for Windows
+    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+    TESSERACT_AVAILABLE = True
+except ImportError:
+    TESSERACT_AVAILABLE = False
+    print("⚠ Tesseract OCR not available. Install pytesseract and Pillow for image support.")
+
 from config import Config
 
 class DataExtractor:
@@ -24,6 +34,8 @@ class DataExtractor:
                 text = self.extract_from_docx(file_content)
             elif file_ext == 'txt':
                 text = file_content.decode('utf-8', errors='ignore')
+            elif file_ext in ['png', 'jpg', 'jpeg']:
+                text = self.extract_from_image(file_content)
             
             # Extract student information from text
             return self.parse_student_info(text)
@@ -65,6 +77,36 @@ class DataExtractor:
             
         except Exception as e:
             print(f"  ⚠ Error reading DOCX: {e}")
+            return ""
+    
+    def extract_from_image(self, image_content):
+        """Extract text from image using OCR"""
+        if not TESSERACT_AVAILABLE:
+            print("  ⚠ Tesseract OCR not available")
+            return ""
+        
+        try:
+            image_file = io.BytesIO(image_content)
+            image = Image.open(image_file)
+            
+            # Convert RGBA to RGB if needed
+            if image.mode == 'RGBA':
+                background = Image.new('RGB', image.size, (255, 255, 255))
+                background.paste(image, mask=image.split()[3])
+                image = background
+            elif image.mode != 'RGB':
+                image = image.convert('RGB')
+            
+            # Use pytesseract to extract text with custom config
+            # --psm 3 = Fully automatic page segmentation
+            # --oem 3 = Default OCR Engine mode
+            custom_config = r'--oem 3 --psm 3'
+            text = pytesseract.image_to_string(image, config=custom_config)
+            
+            return text
+            
+        except Exception as e:
+            print(f"  ⚠ Error reading image with OCR: {e}")
             return ""
     
     def parse_student_info(self, text):
@@ -112,6 +154,8 @@ class DataExtractor:
                 return self.extract_full_docx(file_content)
             elif file_ext == 'txt':
                 return file_content.decode('utf-8', errors='ignore')
+            elif file_ext in ['png', 'jpg', 'jpeg']:
+                return self.extract_from_image(file_content)
             
             return ""
             

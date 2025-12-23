@@ -53,17 +53,17 @@ class AssignmentEvaluator:
         score = 0
         feedback = []
         
-        # Check for minimum content quality - be very strict
+        # Check for minimum content quality
         words = [w for w in content.split() if len(w) > 2 and not w.isdigit()]
         unique_words = set(word.lower() for word in words)
         lines = [l for l in content.split('\n') if l.strip()]
         
-        # Reject garbage/minimal content
-        if (len(content.strip()) < 200 or 
-            len(words) < 40 or 
-            len(unique_words) < 25 or 
-            len(lines) < 5):
-            feedback.append("Insufficient meaningful content - needs at least 40+ words, 25+ unique words, 5+ lines")
+        # Reject only completely garbage/minimal content (lowered thresholds for images)
+        if (len(content.strip()) < 50 or 
+            len(words) < 10 or 
+            len(unique_words) < 5 or 
+            len(lines) < 2):
+            feedback.append("Insufficient meaningful content - needs at least 10+ words, 5+ unique words, 2+ lines")
             return {
                 'score': 0,
                 'max_score': weight,

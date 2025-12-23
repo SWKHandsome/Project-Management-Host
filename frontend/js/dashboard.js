@@ -1,7 +1,7 @@
 // AutoAssess Dashboard JavaScript
 
 // Configuration
-const API_BASE_URL = 'https://project-management-fch3gbabc4hndrcs.malaysiawest-01.azurewebsites.net/';
+const API_BASE_URL = 'http://localhost:5000';
 
 // State Management
 let submissions = [];
@@ -184,6 +184,9 @@ function renderSubmissions(filteredSubmissions = null) {
                     <button class="btn btn-sm btn-info" onclick="viewDetails('${submission._id}')">
                         📋 Details
                     </button>
+                    <button class="btn btn-sm btn-primary" onclick="viewDocument('${submission._id}', '${submission.file_id}', '${submission.file_name}')" title="View assignment document">
+                        👁️ View
+                    </button>
                     ${submission.status === 'evaluated' ? `
                         <button class="btn btn-sm btn-download" onclick="downloadReport('${submission._id}')">
                             📥 Report
@@ -235,9 +238,10 @@ function attachSortingListeners() {
         const header = headers[column.index];
         if (!header) return;
         
-        // Store original label
+        // Store original label and mark as sortable
         header.setAttribute('data-column', column.key);
         header.setAttribute('data-label', column.label);
+        header.classList.add('sortable');
         
         header.style.cursor = 'pointer';
         header.style.userSelect = 'none';
@@ -502,6 +506,85 @@ async function downloadReport(submissionId, format = 'pdf') {
     }
 }
 
+async function viewDocument(submissionId, fileId, fileName) {
+    try {
+        const data = await apiCall(`/api/submissions/${submissionId}`);
+        const submission = data.submission;
+        
+        if (!submission) {
+            throw new Error('Submission not found');
+        }
+        
+        const fileContent = submission.file_content || '';
+        const fileExt = fileName ? fileName.split('.').pop().toLowerCase() : '';
+        
+        let viewerContent = '';
+        
+        // Check file type and render accordingly
+        if (fileId && (fileExt === 'pdf' || fileExt === 'docx' || fileExt === 'doc')) {
+            // Use Google Drive preview (works without API auth)
+            viewerContent = `
+                <div class="document-viewer">
+                    <div class="viewer-header">
+                        <h3>📄 ${fileName || 'Assignment Document'}</h3>
+                        <p class="text-muted">Viewing from Google Drive</p>
+                    </div>
+                    <iframe 
+                        src="https://drive.google.com/file/d/${fileId}/preview" 
+                        width="100%" 
+                        height="600px" 
+                        frameborder="0"
+                        allow="autoplay"
+                        style="border-radius: 8px;">
+                    </iframe>
+                    <div class="viewer-footer">
+                        <button class="btn btn-outline" onclick="window.open('https://drive.google.com/file/d/${fileId}/view', '_blank')">
+                            🔗 Open in Google Drive
+                        </button>
+                    </div>
+                </div>
+            `;
+        } else if (fileContent) {
+            // Display extracted text content
+            viewerContent = `
+                <div class="document-viewer">
+                    <div class="viewer-header">
+                        <h3>📄 ${fileName || 'Assignment Document'}</h3>
+                        <p class="text-muted">Extracted Text Content</p>
+                    </div>
+                    <div class="text-content-viewer">
+                        <pre>${escapeHtml(fileContent)}</pre>
+                    </div>
+                </div>
+            `;
+        } else {
+            viewerContent = `
+                <div class="document-viewer">
+                    <div class="empty-state">
+                        <div class="empty-icon">📭</div>
+                        <h3>No Content Available</h3>
+                        <p>Unable to display document content.</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Show in modal
+        elements.modalBody.innerHTML = viewerContent;
+        elements.detailsModal.classList.add('active');
+        
+    } catch (error) {
+        console.error('Error viewing document:', error);
+        showNotification('Failed to load document', 'error');
+    }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 async function downloadSpreadsheet() {
     try {
         showNotification('Generating spreadsheet...', 'info');
@@ -586,6 +669,3 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
-
-
-
