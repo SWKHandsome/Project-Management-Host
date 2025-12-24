@@ -38,9 +38,19 @@ Config.validate()
 
 @app.route('/')
 def index():
-    """Serve the frontend dashboard"""
-    frontend_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'frontend', 'index.html')
-    return send_file(frontend_path)
+    """Serve frontend when available otherwise report backend status"""
+    frontend_path = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)),
+        'frontend',
+        'index.html'
+    )
+    if os.path.exists(frontend_path):
+        return send_file(frontend_path)
+    return jsonify({
+        'message': 'Backend running',
+        'frontend': 'not bundled on this host',
+        'status': 'ok'
+    })
 
 @app.route('/css/<path:filename>')
 def serve_css(filename):
